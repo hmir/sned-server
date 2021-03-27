@@ -6,6 +6,7 @@ use chrono::{Duration, NaiveDateTime};
 use diesel::prelude::*;
 use diesel::r2d2::{self, ConnectionManager};
 use futures::{StreamExt, TryStreamExt};
+use openssl::ssl::{SslAcceptor, SslFiletype, SslMethod};
 use rand::distributions::Alphanumeric;
 use rand::{thread_rng, Rng};
 use serde::{Deserialize, Serialize};
@@ -32,6 +33,8 @@ const CLEANUP_PROCESS_SLEEP_SECONDS: i64 = 5 * 60;
 
 const USERNAME_MAX_LEN: i32 = 15;
 const FILE_NAME_MAX_LEN: i32 = 20;
+
+const PORT: i32 = 8191;
 
 #[derive(Deserialize, Clone)]
 struct TransferRequestMetadataPayload {
@@ -670,6 +673,14 @@ async fn main() -> std::io::Result<()> {
     dotenv::dotenv().ok();
     sodiumoxide::init().unwrap();
 
+    let mut builder = SslAcceptor::mozilla_intermediate(SslMethod::tls()).unwrap();
+    builder
+        .set_private_key_file("key.pem", SslFiletype::PEM)
+        .expect("key.pem not found");
+    builder
+        .set_certificate_chain_file("cert.pem")
+        .expect("cert.pem not found");
+
     // Set up database connection pool
     let connspec = std::env::var("DATABASE_URL").expect("DATABASE_URL");
     let manager = ConnectionManager::<PgConnection>::new(connspec);
@@ -691,7 +702,7 @@ async fn main() -> std::io::Result<()> {
             .service(authenticator)
             .service(list_users)
     })
-    .bind("0.0.0.0:8000")?
+    .bind_openssl("0.0.0.0:".to_string() + &PORT.to_string(), builder)?
     .run()
     .await
 }

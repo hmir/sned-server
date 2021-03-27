@@ -1,4 +1,7 @@
 debug/
 target/
 
+key.pem
+cert.pem
+
 **/*.rs.bk
