@@ -2,7 +2,7 @@
 This is the server component of [sned](http://github.com/sned).
 
 ## Setup
-Install and set up [PostgreSQL](https://www.postgresql.org/). You should make the your unix user a postgres superuser.
+Install and set up [PostgreSQL](https://www.postgresql.org/). You should make your unix user a postgres superuser.
 
 Install [diesel-cli](https://diesel.rs/).
 
